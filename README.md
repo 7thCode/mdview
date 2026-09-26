@@ -1,35 +1,37 @@
-# project-template
+# MDView
 
-Template repository for new projects: multi-platform build via
-[actions-templates](https://github.com/7thCode/actions-templates), GitHub Release
-publishing on tag push, and a GitHub Pages download page.
+編集モードと参照モードを切り替えられる Markdown エディタ(Tauri 2 + Svelte 5)。
 
-## Using this template
+## 機能
+
+- 編集モード: CodeMirror 6(Markdown シンタックスハイライト、Undo/Redo、検索・置換)
+- 参照モード: GFM(表・タスクリスト・コードハイライト)のレンダリング表示
+- File: New / Open / Open Recent / Save / Save As、ドラッグ&ドロップで開く
+- Edit: Undo / Redo / Cut / Copy / Paste / Select All / Find / Replace
+- 未保存の変更がある状態で閉じる・開く際の確認ダイアログ
+
+## ショートカット
+
+| 操作 | キー |
+| --- | --- |
+| 新規 / 開く / 保存 / 名前を付けて保存 | `Cmd/Ctrl+N` / `O` / `S` / `Shift+S` |
+| Undo / Redo | `Cmd/Ctrl+Z` / `Shift+Z` |
+| 検索 / 置換 | `Cmd/Ctrl+F` / `Alt+F` |
+| 編集/参照 切り替え | `Cmd/Ctrl+E` |
+
+## 開発
+
+前提: Node.js, Rust, [Tauri の前提条件](https://tauri.app/start/prerequisites/)
 
 ```bash
-gh repo create <new-repo> --template 7thCode/project-template --public
-cd <new-repo>
+npm install
+npm run tauri dev     # 開発起動
+npm run tauri build   # パッケージ作成
+npm run check         # 型チェック
 ```
 
-Then:
+## 既知の制限
 
-1. **Branch protection** — require PRs into `main`:
-   ```bash
-   scripts/setup-branch-protection.sh <owner>/<new-repo>
-   ```
-2. **GitHub Pages** — Settings → Pages → Source: Deploy from a branch →
-   `main` / `/docs`.
-3. **Fill in `docs/index.html`** — replace `PROJECT_NAME`, `PROJECT_DESCRIPTION`,
-   `OWNER/REPO`, version and download links, `FEATURE_*`, `FOOTER_TEXT`.
-4. **Adjust `.github/workflows/build.yml`** if the project isn't a plain
-   `npm ci && npm run build && electron-builder` app — override the reusable
-   workflow's `node_version` / `package_manager` / `build_command` /
-   `artifact_globs` inputs (see
-   [actions-templates README](https://github.com/7thCode/actions-templates)).
-5. **Tag a release** — `git tag v0.1.0 && git push origin v0.1.0` builds on
-   macOS/Windows/Linux and publishes installers to the matching GitHub Release.
-
-## Workflow
-
-Always work on a feature branch and merge into `main` via pull request — never
-push directly to `main`.
+- UTF-8 のファイルのみ対応
+- 参照モードでは相対パスの画像は表示されない
+- 参照モードでの検索は未対応(Find は編集モードに切り替えて実行)
