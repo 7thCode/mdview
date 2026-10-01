@@ -1,6 +1,6 @@
 [package]
 name = "mdview"
-version = "0.1.1"
+version = "0.2.0"
 description = "Markdown editor with edit and view modes"
 authors = ["you"]
 edition = "2021"
