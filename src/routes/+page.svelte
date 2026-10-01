@@ -4,6 +4,7 @@
   import { getCurrentWebview } from '@tauri-apps/api/webview';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import Editor from '$lib/Editor.svelte';
+  import MarkdownToolbar from '$lib/MarkdownToolbar.svelte';
   import Preview from '$lib/Preview.svelte';
   import { doc } from '$lib/document.svelte';
   import '../app.css';
@@ -80,6 +81,10 @@
       <button class:active={doc.mode === 'view'} onclick={() => (doc.mode = 'view')}>参照</button>
     </div>
   </header>
+
+  {#if doc.mode === 'edit'}
+    <MarkdownToolbar onselect={(id) => editor.commands.applyTemplate(id)} />
+  {/if}
 
   <main>
     <!-- 編集ビューは非表示でも保持し、モード切替後もUndo履歴とカーソル位置を維持する -->
