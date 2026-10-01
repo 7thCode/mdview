@@ -8,6 +8,7 @@
   import { Compartment, EditorState } from '@codemirror/state';
   import { oneDark } from '@codemirror/theme-one-dark';
   import { drawSelection, EditorView, keymap } from '@codemirror/view';
+  import { buildTemplateTransaction, type TemplateId } from './markdownTemplates';
 
   let {
     value,
@@ -66,7 +67,12 @@
     undo: () => view && undo(view),
     redo: () => view && redo(view),
     find: () => view && (openSearchPanel(view), view.focus()),
-    focus: () => view?.focus()
+    focus: () => view?.focus(),
+    applyTemplate: (id: TemplateId) => {
+      if (!view) return;
+      view.dispatch(buildTemplateTransaction(view.state, id));
+      view.focus();
+    }
   };
 </script>
 
