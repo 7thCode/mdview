@@ -167,6 +167,14 @@
       .dl small { color: var(--muted); }
       .dl .btn { margin-top: 12px; justify-content: center; padding: 11px 18px; font-size: 15px; }
       .dl .alt { font-size: 13px; color: var(--muted); margin-top: 6px; }
+      .guide { margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+      .guide > div { padding: 22px 24px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); font-size: 14px; }
+      .guide h3 { margin: 0 0 6px; font-size: 16px; }
+      .guide h4 { margin: 14px 0 4px; font-size: 13.5px; color: var(--accent-2); }
+      .guide ol { margin: 0; padding-left: 20px; color: var(--muted); }
+      .guide li { margin: 3px 0; }
+      .guide p { margin: 0; color: var(--muted); }
+      .guide code { padding: 1px 6px; border-radius: 5px; background: var(--code-bg); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; color: var(--text); word-break: break-all; }
       .note { margin-top: 20px; font-size: 13.5px; color: var(--muted); }
 
       footer { margin-top: 96px; padding: 32px 0 48px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
@@ -319,9 +327,51 @@
           </div>
         </div>
         <p class="note">
-          現在のビルドはコード署名・公証を行っていません。macOS では初回に警告が表示されるため、アプリを右クリック →「開く」で起動してください。
-          Windows では SmartScreen の警告で「詳細情報 → 実行」を選びます。
+          現在のビルドはコード署名・公証を行っていないため、初回起動時に OS の警告が表示されます。以下の手順で起動できます(ダウンロード元が本ページ / GitHub Releases であることを確認してください)。
         </p>
+        <div class="guide">
+          <div>
+            <h3>macOS の場合</h3>
+            <p>「“MDView”は開けません」「開発元を検証できません」などと表示されたとき。</p>
+            <h4>方法 1: システム設定から許可(macOS 15 Sequoia 以降はこちら)</h4>
+            <ol>
+              <li>.dmg を開き、MDView を「アプリケーション」フォルダへドラッグします。</li>
+              <li>MDView を一度開き、警告ダイアログを「完了」で閉じます。</li>
+              <li>「システム設定 → プライバシーとセキュリティ」を開き、下部の「セキュリティ」欄にある「“MDView”は開くのをブロックされました」の「このまま開く」をクリックします。</li>
+              <li>パスワードまたは Touch ID で認証し、確認ダイアログで「開く」を選びます。以降は通常どおり起動できます。</li>
+            </ol>
+            <h4>方法 2: 右クリックで開く(macOS 14 Sonoma 以前)</h4>
+            <ol>
+              <li>「アプリケーション」フォルダで MDView を <kbd>control</kbd> を押しながらクリック(または右クリック)します。</li>
+              <li>メニューの「開く」を選び、確認ダイアログでもう一度「開く」を選びます。</li>
+            </ol>
+            <h4>方法 3: ターミナルで隔離属性を削除</h4>
+            <p>「壊れているため開けません」と表示される場合はこちらです。</p>
+            <p><code>xattr -dr com.apple.quarantine /Applications/MDView.app</code></p>
+          </div>
+          <div>
+            <h3>Windows の場合</h3>
+            <p>「Windows によって PC が保護されました」(Microsoft Defender SmartScreen)と表示されたとき。</p>
+            <h4>インストーラ(.exe)の実行</h4>
+            <ol>
+              <li>ダウンロードした .exe をダブルクリックします。</li>
+              <li>警告画面の本文中にある「詳細情報」をクリックします。</li>
+              <li>表示された「実行」ボタンをクリックします。</li>
+              <li>ユーザーアカウント制御(UAC)が出たら「はい」を選び、インストーラの指示に従います。</li>
+            </ol>
+            <h4>ブラウザでブロックされた場合</h4>
+            <ol>
+              <li>Edge / Chrome のダウンロード一覧で該当ファイルの「…」→「保持する」を選びます。</li>
+              <li>必要に応じて「詳細を表示」→「保持する」を選びます。</li>
+            </ol>
+            <h4>それでも起動しない場合</h4>
+            <ol>
+              <li>.exe を右クリック →「プロパティ」を開きます。</li>
+              <li>「全般」タブ下部の「セキュリティ」欄で「許可する」にチェックを入れ、「OK」を押します。</li>
+              <li>もう一度 .exe を実行します。</li>
+            </ol>
+          </div>
+        </div>
       </section>
 
       <footer>
