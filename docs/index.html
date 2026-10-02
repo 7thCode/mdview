@@ -114,8 +114,8 @@
         border: 0; padding: 5px 16px; font: inherit; font-size: 13px; color: var(--text); background: transparent; cursor: pointer;
       }
       .seg button[aria-pressed='true'] { background: var(--accent); color: #fff; }
-      .tplbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 14px; background: var(--surface); border-bottom: 1px solid var(--border); transition: opacity .3s; }
-      .tplbar:not(.on) { opacity: 0; pointer-events: none; }
+      .tplbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 14px; background: var(--surface); border-bottom: 1px solid var(--border); transition: opacity .3s, visibility .3s; }
+      .tplbar:not(.on) { opacity: 0; visibility: hidden; pointer-events: none; }
       .tplbar button { padding: 2px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-soft); color: var(--text); font: inherit; font-size: 12px; line-height: 1.6; cursor: pointer; }
       .tplbar button:hover { border-color: var(--accent); color: var(--accent-2); }
       .screen { position: relative; height: 360px; }
