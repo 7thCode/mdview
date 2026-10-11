@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 use tauri::menu::{Menu, MenuItemBuilder, PredefinedMenuItem, Submenu, SubmenuBuilder};
 use tauri::{AppHandle, Emitter, Manager, State, Wry};
+use tauri_plugin_opener::OpenerExt;
 
 const MAX_RECENT: usize = 10;
 const RECENT_PREFIX: &str = "recent:";
@@ -78,6 +79,8 @@ fn build_menu(app: &AppHandle, recent: &[String]) -> tauri::Result<Menu<Wry>> {
         .item(&item(app, "save", "Save", Some("CmdOrCtrl+S"))?)
         .item(&item(app, "save-as", "Save As…", Some("CmdOrCtrl+Shift+S"))?)
         .separator()
+        .item(&item(app, "print", "Print…", Some("CmdOrCtrl+P"))?)
+        .separator()
         .item(&PredefinedMenuItem::close_window(app, None)?)
         .build()?;
 
@@ -147,6 +150,42 @@ fn write_file(path: String, content: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn print_html(app: AppHandle, html: String) -> Result<(), String> {
+    use std::io::Write;
+
+    // 共有の一時フォルダではなくアプリ専用のキャッシュに、排他的かつ所有者のみ読み書き可で作る
+    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?;
+    fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+    // 前回までの印刷用ファイルを片付ける
+    if let Ok(entries) = fs::read_dir(&dir) {
+        for entry in entries.flatten() {
+            if entry.file_name().to_string_lossy().starts_with("print-") {
+                let _ = fs::remove_file(entry.path());
+            }
+        }
+    }
+
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or_default();
+    let path = dir.join(format!("print-{}-{nanos}.html", std::process::id()));
+
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
+    let mut file = options.open(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+    file.write_all(html.as_bytes())
+        .map_err(|e| format!("{}: {e}", path.display()))?;
+    drop(file);
+
+    app.opener()
+        .open_path(path.to_string_lossy(), None::<&str>)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn add_recent(app: AppHandle, state: State<RecentFiles>, path: String) -> Result<(), String> {
     let snapshot = {
         let mut files = state.0.lock().map_err(|e| e.to_string())?;
@@ -165,7 +204,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(RecentFiles(Mutex::new(Vec::new())))
-        .invoke_handler(tauri::generate_handler![read_file, write_file, add_recent])
+        .invoke_handler(tauri::generate_handler![read_file, write_file, add_recent, print_html])
         .setup(|app| {
             let handle = app.handle();
             let recent = load_recent(handle);

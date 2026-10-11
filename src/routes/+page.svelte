@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { invoke } from '@tauri-apps/api/core';
   import { listen } from '@tauri-apps/api/event';
   import { getCurrentWebview } from '@tauri-apps/api/webview';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import Editor from '$lib/Editor.svelte';
   import MarkdownToolbar from '$lib/MarkdownToolbar.svelte';
   import Preview from '$lib/Preview.svelte';
+  import { renderMarkdown } from '$lib/markdown';
   import { doc } from '$lib/document.svelte';
   import '../app.css';
 
@@ -29,6 +31,34 @@
     queueMicrotask(action);
   }
 
+  // WKWebView 標準の印刷は両面指定が効かず先頭に空白ページが入るため、
+  // 描画結果を単体の HTML として書き出し、既定のブラウザの印刷機能に渡す
+  async function printDocument() {
+    const css = Array.from(document.styleSheets)
+      .flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText))
+      .join('\n');
+    const dir = doc.path?.replace(/[\\/][^\\/]*$/, '').replaceAll('\\', '/');
+    const base = dir ? `<base href="file://${encodeURI(dir.startsWith('/') ? dir : `/${dir}`)}/" />` : '';
+    const html = `<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<title>${escapeHtml(doc.name)}</title>
+${base}
+<style>${css}</style>
+</head>
+<body>
+<article class="preview markdown-body">${renderMarkdown(doc.content)}</article>
+<script>addEventListener('load', () => setTimeout(() => print(), 300));<\/script>
+</body>
+</html>`;
+    await invoke('print_html', { html });
+  }
+
+  function escapeHtml(text: string): string {
+    return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+  }
+
   async function handleMenu(id: string) {
     if (id.startsWith('recent:')) return doc.openPath(id.slice('recent:'.length));
     switch (id) {
@@ -36,6 +66,7 @@
       case 'open': return doc.openDialog();
       case 'save': return void (await doc.save());
       case 'save-as': return void (await doc.saveAs());
+      case 'print': return printDocument();
       case 'toggle-mode': return doc.toggleMode();
       case 'find':
       case 'replace': return showEditor(() => editor.commands.find());
@@ -78,7 +109,7 @@
     <span class="filename" title={doc.path ?? ''}>{doc.dirty ? '● ' : ''}{doc.name}</span>
     <div class="modes" role="group" aria-label="モード">
       <button class:active={doc.mode === 'edit'} onclick={() => (doc.mode = 'edit')}>編集</button>
-      <button class:active={doc.mode === 'view'} onclick={() => (doc.mode = 'view')}>参照</button>
+      <button class:active={doc.mode === 'view'} onclick={() => (doc.mode = 'view')}>MD</button>
     </div>
   </header>
 
