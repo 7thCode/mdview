@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { invoke } from '@tauri-apps/api/core';
   import { listen } from '@tauri-apps/api/event';
   import { getCurrentWebview } from '@tauri-apps/api/webview';
@@ -7,12 +7,14 @@
   import Editor from '$lib/Editor.svelte';
   import MarkdownToolbar from '$lib/MarkdownToolbar.svelte';
   import Preview from '$lib/Preview.svelte';
-  import { renderMarkdown } from '$lib/markdown';
+  import PrintMarginDialog from '$lib/PrintMarginDialog.svelte';
+  import { printMargin } from '$lib/printMargin.svelte';
   import { doc } from '$lib/document.svelte';
   import '../app.css';
 
   let editor: Editor;
   let dragging = $state(false);
+  let marginDialogOpen = $state(false);
 
   const appWindow = getCurrentWindow();
 
@@ -31,32 +33,20 @@
     queueMicrotask(action);
   }
 
-  // WKWebView 標準の印刷は両面指定が効かず先頭に空白ページが入るため、
-  // 描画結果を単体の HTML として書き出し、既定のブラウザの印刷機能に渡す
+  // 参照ビューに切り替え、描画の反映を待ってからネイティブの印刷ダイアログを開く
   async function printDocument() {
-    const css = Array.from(document.styleSheets)
-      .flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText))
-      .join('\n');
-    const dir = doc.path?.replace(/[\\/][^\\/]*$/, '').replaceAll('\\', '/');
-    const base = dir ? `<base href="file://${encodeURI(dir.startsWith('/') ? dir : `/${dir}`)}/" />` : '';
-    const html = `<!doctype html>
-<html lang="ja">
-<head>
-<meta charset="utf-8" />
-<title>${escapeHtml(doc.name)}</title>
-${base}
-<style>${css}</style>
-</head>
-<body>
-<article class="preview markdown-body">${renderMarkdown(doc.content)}</article>
-<script>addEventListener('load', () => setTimeout(() => print(), 300));<\/script>
-</body>
-</html>`;
-    await invoke('print_html', { html });
-  }
-
-  function escapeHtml(text: string): string {
-    return text.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+    doc.mode = 'view';
+    // @page の余白は印刷時に参照されるため、設定値を style 要素として差し込む
+    let style = document.getElementById('print-page-margin');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'print-page-margin';
+      document.head.append(style);
+    }
+    style.textContent = `@page { margin: ${printMargin.mm}mm; }`;
+    await tick();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    await invoke('print_page');
   }
 
   async function handleMenu(id: string) {
@@ -66,6 +56,7 @@ ${base}
       case 'open': return doc.openDialog();
       case 'save': return void (await doc.save());
       case 'save-as': return void (await doc.saveAs());
+      case 'print-margin': return void (marginDialogOpen = true);
       case 'print': return printDocument();
       case 'toggle-mode': return doc.toggleMode();
       case 'find':
@@ -134,3 +125,7 @@ ${base}
     {/if}
   </main>
 </div>
+
+{#if marginDialogOpen}
+  <PrintMarginDialog onclose={() => (marginDialogOpen = false)} />
+{/if}

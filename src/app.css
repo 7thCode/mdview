@@ -277,4 +277,22 @@ main {
     --code-bg: #f0f0f4;
     color-scheme: light;
   }
+
+  .toolbar {
+    display: none;
+  }
+
+  .app,
+  main,
+  .pane,
+  .pane.scroll {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  .preview {
+    max-width: none;
+    padding: 0;
+  }
 }
