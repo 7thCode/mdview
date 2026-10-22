@@ -78,6 +78,7 @@ fn build_menu(app: &AppHandle, recent: &[String]) -> tauri::Result<Menu<Wry>> {
         .item(&item(app, "save", "Save", Some("CmdOrCtrl+S"))?)
         .item(&item(app, "save-as", "Save As…", Some("CmdOrCtrl+Shift+S"))?)
         .separator()
+        .item(&item(app, "print-margin", "印刷の余白…", None)?)
         .item(&item(app, "print", "Print…", Some("CmdOrCtrl+P"))?)
         .separator()
         .item(&PredefinedMenuItem::close_window(app, None)?)

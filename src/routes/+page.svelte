@@ -7,11 +7,14 @@
   import Editor from '$lib/Editor.svelte';
   import MarkdownToolbar from '$lib/MarkdownToolbar.svelte';
   import Preview from '$lib/Preview.svelte';
+  import PrintMarginDialog from '$lib/PrintMarginDialog.svelte';
+  import { printMargin } from '$lib/printMargin.svelte';
   import { doc } from '$lib/document.svelte';
   import '../app.css';
 
   let editor: Editor;
   let dragging = $state(false);
+  let marginDialogOpen = $state(false);
 
   const appWindow = getCurrentWindow();
 
@@ -33,6 +36,14 @@
   // 参照ビューに切り替え、描画の反映を待ってからネイティブの印刷ダイアログを開く
   async function printDocument() {
     doc.mode = 'view';
+    // @page の余白は印刷時に参照されるため、設定値を style 要素として差し込む
+    let style = document.getElementById('print-page-margin');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'print-page-margin';
+      document.head.append(style);
+    }
+    style.textContent = `@page { margin: ${printMargin.mm}mm; }`;
     await tick();
     await new Promise((resolve) => requestAnimationFrame(resolve));
     await invoke('print_page');
@@ -45,6 +56,7 @@
       case 'open': return doc.openDialog();
       case 'save': return void (await doc.save());
       case 'save-as': return void (await doc.saveAs());
+      case 'print-margin': return void (marginDialogOpen = true);
       case 'print': return printDocument();
       case 'toggle-mode': return doc.toggleMode();
       case 'find':
@@ -113,3 +125,7 @@
     {/if}
   </main>
 </div>
+
+{#if marginDialogOpen}
+  <PrintMarginDialog onclose={() => (marginDialogOpen = false)} />
+{/if}
